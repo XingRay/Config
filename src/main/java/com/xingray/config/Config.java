@@ -88,9 +88,16 @@ public class Config {
             path = makePath(cls);
             pathCache.put(cls, path);
         }
+        if (config == null) {
+            try {
+                config = cls.getDeclaredConstructor().newInstance();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         config = ConfigUtil.populateFromProperties(path, config);
         configs.put(cls, config);
-
         return config;
     }
 
@@ -140,7 +147,7 @@ public class Config {
 
         Path pathAnnotation = cls.getAnnotation(Path.class);
         if (pathAnnotation != null) {
-            return pathAnnotation.value();
+            return rootPath + pathAnnotation.value();
         }
 
         String path;
