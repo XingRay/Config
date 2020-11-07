@@ -71,16 +71,18 @@ public class Config {
         load(config, cls);
     }
 
-    private <T> void load(T config, Class<T> cls) {
+    private <T> T load(T config, Class<T> cls) {
         int configType = getConfigType(cls);
         if (configType == ConfigType.PROPERTIES) {
-            loadProperties(config, cls);
+            return loadProperties(config, cls);
+        } else if (configType == ConfigType.JSON) {
+            return loadJson(cls);
         } else {
-            loadJson(cls);
+            return null;
         }
     }
 
-    private <T> void loadProperties(T config, Class<T> cls) {
+    private <T> T loadProperties(T config, Class<T> cls) {
         String path = pathCache.get(cls);
         if (path == null) {
             path = makePath(cls);
@@ -88,9 +90,11 @@ public class Config {
         }
         config = ConfigUtil.populateFromProperties(path, config);
         configs.put(cls, config);
+
+        return config;
     }
 
-    private <T> void loadJson(Class<T> cls) {
+    private <T> T loadJson(Class<T> cls) {
         String path = pathCache.get(cls);
         if (path == null) {
             path = makePath(cls);
@@ -99,11 +103,17 @@ public class Config {
         String s = FileUtil.readFile(path);
         T config = jsonEngine.fromJson(s, cls);
         configs.put(cls, config);
+
+        return config;
     }
 
 
     public <T> T get(Class<T> cls) {
-        return (T) configs.get(cls);
+        T t = (T) configs.get(cls);
+        if (t == null) {
+            t = load(null, cls);
+        }
+        return t;
     }
 
     public <T> void save(T config) {
