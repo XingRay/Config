@@ -1,0 +1,3 @@
+module Config {
+    requires Util;
+}
