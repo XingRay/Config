@@ -13,8 +13,8 @@ import java.util.Map;
 public class Config {
 
     private final String rootPath;
-    private Map<Class<?>, Object> configs;
-    private Map<Class<?>, String> pathCache;
+    private final Map<Class<?>, Object> configs;
+    private final Map<Class<?>, String> pathCache;
     private JsonEngine jsonEngine;
 
     public Config() {
@@ -54,19 +54,24 @@ public class Config {
 
     public void init(Object... objects) {
         for (Object o : objects) {
+            //noinspection rawtypes
             Class cls = o.getClass();
+            //noinspection unchecked
             load(o, cls);
         }
     }
 
     public void init(Iterable<Object> objects) {
         for (Object o : objects) {
+            //noinspection rawtypes
             Class cls = o.getClass();
+            //noinspection unchecked
             load(o, cls);
         }
     }
 
     public <T> void init(T config) {
+        //noinspection unchecked
         Class<T> cls = (Class<T>) config.getClass();
         load(config, cls);
     }
@@ -116,6 +121,7 @@ public class Config {
 
 
     public <T> T get(Class<T> cls) {
+        //noinspection unchecked
         T t = (T) configs.get(cls);
         if (t == null) {
             t = load(null, cls);
@@ -124,6 +130,7 @@ public class Config {
     }
 
     public <T> void save(T config) {
+        //noinspection rawtypes
         Class cls = config.getClass();
         String path = pathCache.get(cls);
         if (path == null) {
