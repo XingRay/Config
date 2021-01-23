@@ -87,12 +87,18 @@ public class Config {
         }
     }
 
-    private <T> T loadProperties(T config, Class<T> cls) {
-        String path = pathCache.get(cls);
-        if (path == null) {
-            path = makePath(cls);
-            pathCache.put(cls, path);
+    private <T> T load(T config, Class<T> cls, String path) {
+        int configType = getConfigType(cls);
+        if (configType == ConfigType.PROPERTIES) {
+            return loadProperties(config, cls, path);
+        } else if (configType == ConfigType.JSON) {
+            return loadJson(cls, path);
+        } else {
+            return null;
         }
+    }
+
+    private <T> T loadProperties(T config, Class<T> cls, String path) {
         if (config == null) {
             try {
                 config = cls.getDeclaredConstructor().newInstance();
@@ -106,17 +112,30 @@ public class Config {
         return config;
     }
 
+    private <T> T loadJson(Class<T> cls, String path) {
+        String s = FileUtil.readFile(path);
+        T config = jsonEngine.fromJson(s, cls);
+        configs.put(cls, config);
+        return config;
+    }
+
+
+    private <T> T loadProperties(T config, Class<T> cls) {
+        String path = pathCache.get(cls);
+        if (path == null) {
+            path = makePath(cls);
+            pathCache.put(cls, path);
+        }
+        return loadProperties(config, cls, path);
+    }
+
     private <T> T loadJson(Class<T> cls) {
         String path = pathCache.get(cls);
         if (path == null) {
             path = makePath(cls);
             pathCache.put(cls, path);
         }
-        String s = FileUtil.readFile(path);
-        T config = jsonEngine.fromJson(s, cls);
-        configs.put(cls, config);
-
-        return config;
+        return loadJson(cls, path);
     }
 
 
@@ -129,6 +148,16 @@ public class Config {
         return t;
     }
 
+    public <T> T get(Class<T> cls, String path) {
+        //noinspection unchecked
+        T t = (T) configs.get(cls);
+        if (t == null) {
+            t = load(null, cls, path);
+        }
+        return t;
+    }
+
+
     public <T> void save(T config) {
         //noinspection rawtypes
         Class cls = config.getClass();
@@ -138,12 +167,19 @@ public class Config {
             pathCache.put(cls, path);
         }
 
+        save(config, path);
+    }
+
+    public <T> void save(T config, String path) {
+        //noinspection rawtypes
+        Class cls = config.getClass();
         int configType = getConfigType(cls);
         if (configType == ConfigType.JSON) {
             FileUtil.writeFile(path, jsonEngine.toJson(config));
         } else if (configType == ConfigType.PROPERTIES) {
             ConfigUtil.writeToProperties(path, config);
         }
+        configs.put(cls, config);
     }
 
     private <T> String makePath(Class<?> cls) {
