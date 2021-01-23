@@ -76,6 +76,13 @@ public class Config {
         load(config, cls);
     }
 
+    public <T> void init(T config, String path) {
+        //noinspection unchecked
+        Class<T> cls = (Class<T>) config.getClass();
+        load(config, cls, path);
+    }
+
+
     private <T> T load(T config, Class<T> cls) {
         int configType = getConfigType(cls);
         if (configType == ConfigType.PROPERTIES) {
